@@ -6,7 +6,7 @@ A simple operator to return the first K cells of an array
 limit(input, K)
   input: any SciDB array
   K    : uint64 constant
-  returns an array with the same dimensions and attributes as input, max(K, count(input)) cells from input, selected arbitrarily. 
+  returns an array with the same schema as input, selecting max(K, count(input)) cells arbitrarily. 
   running time: O(K)
 ```
 
