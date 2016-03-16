@@ -16,7 +16,7 @@ $ iquery -aq "limit(temp, 5)"
 ```
 
 # Arguments
-The sole parameter is a `uint64` number of cells to return. The output schema is always the same as the input schema. Always returns either K cells or the entire array - whichever is smaller. Optimized for small values of K. Negative inputs and null inputs are coerced to a limit equal to max signed int64 - effectively returning the entire array:
+The sole parameter is a `uint64` number of cells to return. The output schema is always the same as the input schema. Always returns either K cells or the entire array - whichever is smaller. The cells that are chosen to return are indeterminate, and may vary. Optimized for small values of K. Negative inputs and null inputs are coerced to a limit equal to max signed int64 - effectively returning the entire array:
 ```
 $ iquery -aq "op_count(limit(temp, null))"
 {i} count
