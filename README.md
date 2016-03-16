@@ -1,23 +1,24 @@
-# limit
-A simple operator to return the first K cells of an array
+# Limit
+Return up to K cells from a SciDB array
 
-## Suggested Approach
+# Example
 ```
-limit(input, K)
-  input: any SciDB array
-  K    : uint64 constant
-  returns an array with the same schema as input, selecting max(K, count(input)) cells arbitrarily. 
-  running time: O(K)
+$ iquery -naq "store(build(<val:double> [x=1:100,1000000,0], random()), temp)"
+Query was executed successfully
+
+$ iquery -aq "limit(temp, 5)"
+{x} val
+{1} 1.01289e+09
+{2} 1.50197e+08
+{3} 1.80527e+09
+{4} 1.43597e+09
+{5} 1.2949e+09
 ```
 
-## Simple algo:
-Phase 1: On each instance:
- 1. create new MemArray m with same schema as input
- 2. while input has more cells and local count ( m) < K
-     1. copy cell c from input to m
-
-Phase 2: redistribute m to coordinator (psLocalInstance)
-
-Phase 3: repeat Phase 1 on coordinator to create new m', return m'.
-
-The algo can then be improved to make the phases streaming for better performance.
+# Arguments
+The sole parameter is a `uint64` number of cells to return. The output schema is always the same as the input schema. Always returns either K cells or the entire array - whichever is smaller. Optimized for small values of K. Negative inputs and null inputs are coerced to a limit equal to max signed int64 - effectively returning the entire array:
+```
+$ iquery -aq "op_count(limit(temp, null))"
+{i} count
+{0} 100
+```
