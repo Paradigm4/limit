@@ -22,3 +22,13 @@ $ iquery -aq "op_count(limit(temp, null))"
 {i} count
 {0} 100
 ```
+
+# Uses
+`limit` is best for quick examination of large arrays. If the array is dense, then a quick `between` is a good option - but if the array is sparse, the user can't predict which region to select, nor how much data would be returned. The op is also useful as a kind of sampling technique when composing queries. For example:
+```
+complex_query( limit(A, 10000000))
+```
+as well as
+```
+limit(complex_query(A), 10000000)
+```
