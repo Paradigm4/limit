@@ -70,6 +70,22 @@ public:
                 PhysicalOperator(logicalName, physicalName, parameters, schema)
     {}
 
+    size_t peekCount(shared_ptr<Array>& input, size_t const limit)
+    {
+        size_t count = 0;
+        shared_ptr<ConstArrayIterator> saiter = input->getConstIterator(input->getArrayDesc().getAttributes().size()-1);
+        while(!saiter->end() && count < limit)
+        {
+            count+=saiter->getChunk().count();
+            ++(*saiter);
+        }
+        if(count > limit)
+        {
+            return limit;
+        }
+        return count;
+    }
+
     shared_ptr<Array> makeLimitedArray(shared_ptr<Array>& input, shared_ptr<Query>& query, size_t const limit, size_t& actualCount)
     {
         shared_ptr<Array> result = make_shared<MemArray>(_schema,query);
@@ -127,67 +143,62 @@ public:
         {
             limit= limVal.getUint64();
         }
-        size_t count =0;
-        shared_ptr<Array> firstPass = makeLimitedArray(inputArrays[0], query, limit, count);
+        size_t availableCount = peekCount(inputArrays[0], limit);
         InstanceID const myId    = query->getInstanceID();
         InstanceID const coordId = query->getCoordinatorID() == INVALID_INSTANCE ? myId : query->getCoordinatorID();
         size_t const numInstances = query->getInstancesCount();
-        size_t newCount = 0;
+        size_t requiredCount = 0;
         if(myId != coordId) //send my count to the coordinator
         {
-            shared_ptr<SharedBuffer> buffer(new MemoryBuffer(&count, sizeof(size_t)));
+            shared_ptr<SharedBuffer> buffer(new MemoryBuffer(&availableCount, sizeof(size_t)));
             BufSend(coordId, buffer, query);
             buffer = BufReceive(coordId, query);
-            newCount = *(static_cast<size_t const*>(buffer->getData()));
+            requiredCount = *(static_cast<size_t const*>(buffer->getData()));
         }
         else //on coordinator, lower everyone's count as needed
         {
-            vector<size_t> newCounts(numInstances);
+            vector<size_t> requiredCounts(numInstances);
             for(size_t i =0; i<numInstances; ++i)
             {
                 if(i==myId)
                 {
-                    newCounts[myId] = count;
+                    requiredCounts[myId] = availableCount;
                     continue;
                 }
                 shared_ptr<SharedBuffer> buffer = BufReceive(i, query);
-                newCounts[i] = *(static_cast<size_t const*>(buffer->getData()));
+                requiredCounts[i] = *(static_cast<size_t const*>(buffer->getData()));
             }
             size_t totalCount =0;
             for(size_t i=0; i<numInstances; ++i)
             {
-                if(newCounts[i] > limit)
+                if(requiredCounts[i] > limit)
                 {
-                    newCounts[i] = limit;
+                    requiredCounts[i] = limit;
                 }
-                else if(totalCount + newCounts[i] > limit)
+                else if(totalCount + requiredCounts[i] > limit)
                 {
-                    newCounts[i] = static_cast<ssize_t>(limit) - static_cast<ssize_t>(totalCount) > 0 ? limit - totalCount : 0;
+                    requiredCounts[i] = static_cast<ssize_t>(limit) - static_cast<ssize_t>(totalCount) > 0 ? limit - totalCount : 0;
                 }
-                totalCount += newCounts[i];
+                totalCount += requiredCounts[i];
             }
             for(size_t i =0; i<numInstances; ++i)
             {
                 if(i==myId)
                 {
-                    newCount = newCounts[myId];
+                    requiredCount = requiredCounts[myId];
                     continue;
                 }
-                shared_ptr<SharedBuffer> buffer(new MemoryBuffer(&(newCounts[i]), sizeof(size_t)));
+                shared_ptr<SharedBuffer> buffer(new MemoryBuffer(&(requiredCounts[i]), sizeof(size_t)));
                 BufSend(i, buffer, query);
             }
         }
-        if(newCount == count)
-        {
-            return firstPass;
-        }
-        else if(newCount == 0)
+        if(requiredCount == 0)
         {
             return shared_ptr<Array>(new MemArray(_schema, query));
         }
         else
         {
-            return makeLimitedArray(firstPass, query, newCount, count);
+            return makeLimitedArray(inputArrays[0], query, requiredCount, availableCount);
         }
     }
 };
