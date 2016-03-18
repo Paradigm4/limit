@@ -57,8 +57,7 @@ public:
                 schemas[0].getName(),
                 schemas[0].getAttributes(),
                 schemas[0].getDimensions(),
-                schemas[0].getDistribution(),
-                query->getDefaultArrayResidency());
+                defaultPartitioning());
         return res;
     }
 };
