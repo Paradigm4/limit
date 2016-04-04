@@ -115,7 +115,7 @@ public:
             }
             while(!sciters[0]->end() && actualCount < limit)
             {
-                Coordinates const& inputCellPos = sciters[0]->getPosition();
+                Coordinates const inputCellPos = sciters[0]->getPosition();
                 for(size_t i=0; i<nSrcAttrs; i++)
                 {
                     dciters[i]->setPosition(inputCellPos);
