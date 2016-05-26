@@ -39,7 +39,7 @@ else
    CC := "/opt/rh/devtoolset-3/root/usr/bin/gcc"
    CXX := "/opt/rh/devtoolset-3/root/usr/bin/g++"
    CFLAGS+=-std=c++11 -DCPP11
-   SRCS+= ogicalLimit.cpp PhysicalLimit.cpp
+   SRCS+= LogicalLimit.cpp PhysicalLimit.cpp
   endif
 endif
 
