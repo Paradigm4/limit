@@ -32,3 +32,6 @@ as well as
 ```
 limit(complex_query(A), 10000000)
 ```
+
+# Installation
+The easiest way is to first set up dev_tools (https://github.com/paradigm4/dev_tools). Follow the instructions there.
