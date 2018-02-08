@@ -1,3 +1,11 @@
+# ATTENTION
+
+![Attention](http://static.lightwave3d.com/sdk/2015/python/_images/deprecated.jpg)
+
+As of [SciDB 18.1](http://forum.paradigm4.com/t/scidb-release-18-1/2124), `limit` is now part of SciDB core [(see documentation here)](https://paradigm4.atlassian.net/wiki/spaces/scidb/pages/242810956/limit). This repo is kept around for historical purposes, and potentially for external users to report issues. 
+
+This repo supports `limit` for up till SciDB 16.9. 
+
 # Limit
 Return up to K cells from a SciDB array
 
